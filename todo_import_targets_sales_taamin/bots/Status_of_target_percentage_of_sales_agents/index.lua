@@ -44,12 +44,17 @@ end
 
 
 function executeData(listData)
-    emptyData();
     local listAgents = getListAgents();
     local listGroups = getListGroups();
     local listCenters = getListCenters();
     for i = 1 , #listData , 1 do
         local itemData = listData[i];
+
+        --teamyar.write_log(json.encode(itemData))
+        --teamyar.write_log(json.encode(checkExistData(listGroups ,  itemData.group_id)))
+        --teamyar.write_log(json.encode(checkExistData(listAgents ,  itemData.ref_id)))
+        --teamyar.write_log(json.encode(checkExistData(listCenters ,  itemData.ref_id)))
+
         if itemData.ref_id ~= nil and  itemData.percent ~= nil and  itemData.group_id ~= nil and  itemData.type ~= nil and
                 checkExistData(listGroups ,  itemData.group_id) and
                 ((itemData.type == _CONST_TYPE_CENTER._AGENT and checkExistData(listAgents ,  itemData.ref_id)) or (itemData.type == _CONST_TYPE_CENTER._CENTER and checkExistData(listCenters ,  itemData.ref_id)))then
@@ -206,6 +211,48 @@ end
 
 
 ----------------------------------
+function readyGetData(data)
+    local dataExp = {};
+    for i = 1 , #data, 1 do
+        local itemData = data[i];
+
+        if itemData ~= nil and itemData.ref_id ~= nil and itemData.ref_id ~= "" and itemData.type ~= nil then
+            local ref_id =  itemData.ref_id;
+            local type =  itemData.type;
+
+            for key, value in pairs(itemData) do
+                if string.match(key, "group_percent_") then
+                    local group =  explodeToArray(key , "_");
+                    local result = {
+                        ref_id = ref_id ,
+                        type = type ,
+                        group_id = tonumber(group[3]) ,
+                        percent = value
+                    };
+                    teamyar.write_log(json.encode(result))
+                    table.insert(dataExp , result)
+                end
+            end
+        end
+    end
+    return dataExp;
+end
+
+
+function explodeToArray (inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t={}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+        table.insert(t, str)
+    end
+    return t
+end
+
+----------------------------------
+
+
 local params = teamyar.get_input();
 local method = params.method;
 
@@ -223,9 +270,11 @@ elseif method == "insert" then
     if params.__data__ ~= nil  then
         local jsonData = params.__data__;
         --local jsonData = json.decode(params.__data__);
+        jsonData = readyGetData(jsonData)
         executeData(jsonData);
         response.msg = "عملیات با موفقیت انجام شد.";
         response.status = true;
     end
     teamyar.write_result(json.encode(response))
 end
+
