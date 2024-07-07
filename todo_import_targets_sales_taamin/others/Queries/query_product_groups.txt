@@ -1,0 +1,59 @@
+with
+    data as (
+        with
+            productGroup as (
+                with
+                    pGroups as  (
+                        WITH
+                            RECURSIVE ProductHierarchyInternal AS (
+                            SELECT
+                                id,
+                                MODULE_PARENT_ID,
+                                PARENT_ID,
+                                LEVEL,
+                                MODULE_LEVEL,
+                                NAME,
+                                TYPE,
+                                MODULE_ID,
+                                product_id
+                            FROM
+                                WH_SETTING_PRODUCT_INFO
+                            WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 {{whereGroupSalesId}}
+                            UNION ALL
+                            SELECT
+                                c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                            FROM
+                                WH_SETTING_PRODUCT_INFO c
+                                    INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                        select * from ProductHierarchyInternal
+                    ),
+                    pGroupLast as (
+                        WITH RECURSIVE recursive_cte AS (
+                            SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                            FROM pGroups
+                            WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                            UNION ALL
+                            SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                            FROM pGroups t
+                                     INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                        )
+                        SELECT id, name , parent , PRODUCT_ID
+                        FROM recursive_cte
+                    )
+                select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                from pGroupLast as pgl
+                left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+            )
+        select distinct  pg.group_product_id, pg.group_product_name
+        from productGroup as pg
+    )
+select distinct
+    group_product_id as id, concat(group_product_id , ' - ' ,group_product_name) as name
+from data
+
+
+
+
+
+
+

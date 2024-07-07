@@ -1,0 +1,2 @@
+select product_id ,  product_manufactured , product_active
+from supply_unit_product_attrs

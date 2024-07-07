@@ -1,0 +1,52 @@
+<script src="bot/run/332/craete_excel_tamplate_tamin/to-excel.js"/>
+
+<script>
+
+    const headers = {
+        "group_product_id" : "شناسه گروه کالا",
+        "group_product_name" : "نام گروه کالا",
+        "product_id" : "product_id",
+        "product_full_Name" : "نام کالا",
+        "group_main_id" : "شناسه گروه اصلی",
+        "group_main_name" : "نام گروه اصلی" ,
+        "center_name" : "مرکز فروش" ,
+        "center_value" : "center_value" ,
+        "center_sazemani_name" : "مرکز فروش سازمانی" ,
+        "center_sazemani_value" : "center_sazemani_value" ,
+        "year" : "سال",
+        "month" : "ماه",
+        "description" : "description",
+        "first_target" : "first_target",
+        "after_edit_target" : "after_edit_target",
+        "manufactured_product" : "manufactured_product",
+        "active_product" : "active_product"
+    };
+
+    const exp = {{dataTamin}};
+    const datas = [];
+
+    for (let i=0;i<exp.length;i++){
+        const item = exp[i];
+        datas.push({
+            "group_product_id" : item["group_product_id"],
+            "group_product_name" : item["group_product_name"],
+            "product_id" : item["product_id"],
+            "product_full_Name" : item["product_full_Name"],
+            "group_main_id" : item["group_main_id"],
+            "group_main_name" : item["group_main_name"],
+            "center_name" : item["center_name"] ,
+            "center_value" : item["center_value"] ,
+            "center_sazemani_name" : item["center_sazemani_name"] ,
+            "center_sazemani_value" : item["center_sazemani_value"] ,
+            "year" : item["year"],
+            "month" : item["month"],
+            "description" : item["description"],
+            "first_target" : item["first_target"],
+            "after_edit_target" : item["after_edit_target"],
+            "manufactured_product" : item["manufactured_product"],
+            "active_product" : item["active_product"]
+        })
+    }
+
+    convertToExcel(headers, datas , "{{file_name}}")
+</script>

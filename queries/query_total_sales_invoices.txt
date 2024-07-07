@@ -1,0 +1,126 @@
+
+with
+    data as (
+        with
+            salesInfo as (
+                with
+                    salseInvoceProduct as (
+                        select id as invoice_product_id ,  INVOICE_ID , PRODUCT_ID ,  BASE_SYMBOL_FEE , QUANTITY , BASE_SYMBOL_TOLL , BASE_SYMBOL_TAX , BASE_SYM_VALUE_ADDED , BASE_SYMBOL_DISCOUNT , ATTRIBUTE_ID
+                        from sales_invoice_product
+                    ),
+                    salseInvoce as (
+                        select id , run_date , status , TYPE
+                        from sales_invoice
+
+
+                        WHERE sales_invoice.run_date >= {{dateFrom}}
+    AND sales_invoice.run_date <= {{dateTo}}+24*60*60*10000000
+
+
+    AND sales_invoice.type = 1
+    AND sales_invoice.org_id = 2
+    AND sales_invoice.DELETED = 0
+    -- AND wh_product.product_type_id = 4
+    -- AND WH_PRODUCT.full_code NOT IN (9601, 9602, 9603, 9604, 9605, 9205, 99, 9606)
+    )
+select *
+from salseInvoceProduct as sip
+         join salseInvoce as si on sip.INVOICE_ID = si.id
+     --  where PRODUCT_ID = 17175
+     -- where sip.INVOICE_ID = 148863
+
+
+    ) ,
+            productsInfo as (
+                with
+                    products as (
+                        select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID
+                        from wh_product as p
+                    ) ,
+                    product_attr as (
+                        select wcf.name product_attr_name , wpad.REFERENCE_ID as product_id , wpad.content as product_attr_value , wpa.BAR_CODE  as product_bar_code , wpa.id as product_attr_id
+                        from WH_PR_ATTRIBUTE_DETAIL as wpad
+                                 join wh_product_attribute as wpa on wpad.REFERENCE_ID = wpa.REFERENCE_ID and wpad.attribute_id = wpa.id
+                                 join wh_custom_fields as wcf on wpad.field_id = wcf.id
+                    ) ,
+                    stock_capacity as (
+                        select id , DECIMAL_NUM
+                        from WH_STOCK_CAPACITY as wsp
+                    )
+                select p.product_id, p.product_name, p.product_full_Name, p.product_code ,
+                       pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
+                       sc.DECIMAL_NUM
+                from products as p
+                         left join stock_capacity as sc  on p.CAPACITY_ID = sc.id
+                         left join product_attr as pa on p.product_id = pa.product_id
+            ),
+            productGroup as (
+                with
+                    pGroups as  (
+                        WITH
+                            RECURSIVE ProductHierarchyInternal AS (
+                            SELECT
+                                id,
+                                MODULE_PARENT_ID,
+                                PARENT_ID,
+                                LEVEL,
+                                MODULE_LEVEL,
+                                NAME,
+                                TYPE,
+                                MODULE_ID,
+                                product_id
+                            FROM
+                                WH_SETTING_PRODUCT_INFO
+                            WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 AND MODULE_PARENT_ID = 12647
+                            UNION ALL
+                            SELECT
+                                c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                            FROM
+                                WH_SETTING_PRODUCT_INFO c
+                                    INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                        select * from ProductHierarchyInternal
+                    ),
+                    pGroupLast as (
+                        WITH RECURSIVE recursive_cte AS (
+                            SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                            FROM pGroups
+                            WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                            UNION ALL
+                            SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                            FROM pGroups t
+                                     INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                        )
+                        SELECT id, name , parent , PRODUCT_ID
+                        FROM recursive_cte
+                    )
+                select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                from pGroupLast as pgl
+                         left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+            )
+select distinct   si.INVOICE_ID , si.invoice_product_id , si.BASE_SYMBOL_FEE , si.QUANTITY , si.BASE_SYMBOL_TAX , si.BASE_SYMBOL_TOLL , BASE_SYM_VALUE_ADDED , BASE_SYMBOL_DISCOUNT  ,
+                  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value ,
+                  pi.DECIMAL_NUM ,
+                  pg.group_product_id, pg.group_product_name
+from salesInfo as si
+         join productsInfo as pi on si.PRODUCT_ID = pi.product_id and ((si.ATTRIBUTE_ID = 0) or (si.ATTRIBUTE_ID > 0 and  si.ATTRIBUTE_ID = pi.product_attr_id)) -- and
+         left join productGroup as pg on pi.product_id = pg.PRODUCT_ID
+group by si.INVOICE_ID , si.invoice_product_id , si.BASE_SYMBOL_FEE , si.QUANTITY , si.BASE_SYMBOL_TAX , si.BASE_SYMBOL_TOLL , si.BASE_SYM_VALUE_ADDED , si.BASE_SYMBOL_DISCOUNT ,
+         pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value ,
+         pi.DECIMAL_NUM ,
+         pg.group_product_id, pg.group_product_name
+    )
+select
+    INVOICE_ID ,
+    group_product_id, group_product_name ,
+    product_id, product_name, product_full_Name, product_code,
+    GROUP_CONCAT(product_attr_value) ,
+    SUM((((BASE_SYMBOL_FEE * (COALESCE(QUANTITY,0)/POWER(10,COALESCE(DECIMAL_NUM,0))) ) / POWER(10, 3)
+             ) + BASE_SYMBOL_TAX + BASE_SYMBOL_TOLL +
+         BASE_SYM_VALUE_ADDED - BASE_SYMBOL_DISCOUNT)) over (partition by INVOICE_ID , invoice_product_id)AS SUM
+from data
+group by INVOICE_ID , invoice_product_id , BASE_SYMBOL_FEE , QUANTITY , BASE_SYMBOL_TAX , BASE_SYMBOL_TOLL , BASE_SYM_VALUE_ADDED , BASE_SYMBOL_DISCOUNT ,
+         group_product_id, group_product_name ,
+         product_id, product_name, product_full_Name, product_code
+;
+
+

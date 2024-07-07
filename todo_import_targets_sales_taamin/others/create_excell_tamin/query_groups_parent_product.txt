@@ -1,0 +1,402 @@
+with data as (
+
+    with
+        products as (
+            with
+                group_compiuter as (
+                    with
+                        productsInfo as (
+                            with
+                                products as (
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID , FULL_CODE
+                                    from wh_product as p
+                                ) ,
+                                product_attr as (
+                                    select wcf.name product_attr_name , wpad.REFERENCE_ID as product_id , wpad.content as product_attr_value , wpa.BAR_CODE  as product_bar_code , wpa.id as product_attr_id
+                                    from WH_PR_ATTRIBUTE_DETAIL as wpad
+                                             join wh_product_attribute as wpa on wpad.REFERENCE_ID = wpa.REFERENCE_ID and wpad.attribute_id = wpa.id
+                                             join wh_custom_fields as wcf on wpad.field_id = wcf.id
+                                ) ,
+                                stock_capacity as (
+                                    select id , DECIMAL_NUM
+                                    from WH_STOCK_CAPACITY as wsp
+                                )
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE,
+                                   pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
+                                   sc.DECIMAL_NUM
+                            from products as p
+                                     left join stock_capacity as sc  on p.CAPACITY_ID = sc.id
+                                     left join product_attr as pa on p.product_id = pa.product_id
+                        ),
+                        productGroup as (
+                            with
+                                pGroups as  (
+                                    WITH
+                                        RECURSIVE ProductHierarchyInternal AS (
+                                        SELECT
+                                            id,
+                                            MODULE_PARENT_ID,
+                                            PARENT_ID,
+                                            LEVEL,
+                                            MODULE_LEVEL,
+                                            NAME,
+                                            TYPE,
+                                            MODULE_ID,
+                                            product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO
+                                        WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 AND MODULE_PARENT_ID = 12648
+                                        UNION ALL
+                                        SELECT
+                                            c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO c
+                                                INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                                    select * from ProductHierarchyInternal
+                                ),
+                                pGroupLast as (
+                                    WITH RECURSIVE recursive_cte AS (
+                                        SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                                        FROM pGroups
+                                        WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                                        UNION ALL
+                                        SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                                        FROM pGroups t
+                                                 INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                                    )
+                                    SELECT id, name , parent , PRODUCT_ID
+                                    FROM recursive_cte
+                                )
+                            select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                            from pGroupLast as pgl
+                                     left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+                        )
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE,
+                                     pi.DECIMAL_NUM ,
+                                     pg.group_product_id, pg.group_product_name
+                    from productsInfo as pi
+                             join productGroup as pg on pi.product_id = pg.PRODUCT_ID
+                ) ,
+                group_mobili as (
+                    with
+                        productsInfo as (
+                            with
+                                products as (
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID , FULL_CODE
+                                    from wh_product as p
+                                ) ,
+                                product_attr as (
+                                    select wcf.name product_attr_name , wpad.REFERENCE_ID as product_id , wpad.content as product_attr_value , wpa.BAR_CODE  as product_bar_code , wpa.id as product_attr_id
+                                    from WH_PR_ATTRIBUTE_DETAIL as wpad
+                                             join wh_product_attribute as wpa on wpad.REFERENCE_ID = wpa.REFERENCE_ID and wpad.attribute_id = wpa.id
+                                             join wh_custom_fields as wcf on wpad.field_id = wcf.id
+                                ) ,
+                                stock_capacity as (
+                                    select id , DECIMAL_NUM
+                                    from WH_STOCK_CAPACITY as wsp
+                                )
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE,
+                                   pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
+                                   sc.DECIMAL_NUM
+                            from products as p
+                                     left join stock_capacity as sc  on p.CAPACITY_ID = sc.id
+                                     left join product_attr as pa on p.product_id = pa.product_id
+                        ),
+                        productGroup as (
+                            with
+                                pGroups as  (
+                                    WITH
+                                        RECURSIVE ProductHierarchyInternal AS (
+                                        SELECT
+                                            id,
+                                            MODULE_PARENT_ID,
+                                            PARENT_ID,
+                                            LEVEL,
+                                            MODULE_LEVEL,
+                                            NAME,
+                                            TYPE,
+                                            MODULE_ID,
+                                            product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO
+                                        WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 AND MODULE_PARENT_ID = 12905
+                                        UNION ALL
+                                        SELECT
+                                            c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO c
+                                                INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                                    select * from ProductHierarchyInternal
+                                ),
+                                pGroupLast as (
+                                    WITH RECURSIVE recursive_cte AS (
+                                        SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                                        FROM pGroups
+                                        WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                                        UNION ALL
+                                        SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                                        FROM pGroups t
+                                                 INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                                    )
+                                    SELECT id, name , parent , PRODUCT_ID
+                                    FROM recursive_cte
+                                )
+                            select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                            from pGroupLast as pgl
+                                     left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+                        )
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE,
+                                     pi.DECIMAL_NUM ,
+                                     pg.group_product_id, pg.group_product_name
+                    from productsInfo as pi
+                             join productGroup as pg on pi.product_id = pg.PRODUCT_ID
+                ),
+                group_soti as (
+                    with
+                        productsInfo as (
+                            with
+                                products as (
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE
+                                    from wh_product as p
+                                ) ,
+                                product_attr as (
+                                    select wcf.name product_attr_name , wpad.REFERENCE_ID as product_id , wpad.content as product_attr_value , wpa.BAR_CODE  as product_bar_code , wpa.id as product_attr_id
+                                    from WH_PR_ATTRIBUTE_DETAIL as wpad
+                                             join wh_product_attribute as wpa on wpad.REFERENCE_ID = wpa.REFERENCE_ID and wpad.attribute_id = wpa.id
+                                             join wh_custom_fields as wcf on wpad.field_id = wcf.id
+                                ) ,
+                                stock_capacity as (
+                                    select id , DECIMAL_NUM
+                                    from WH_STOCK_CAPACITY as wsp
+                                )
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE ,
+                                   pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
+                                   sc.DECIMAL_NUM
+                            from products as p
+                                     left join stock_capacity as sc  on p.CAPACITY_ID = sc.id
+                                     left join product_attr as pa on p.product_id = pa.product_id
+                        ),
+                        productGroup as (
+                            with
+                                pGroups as  (
+                                    WITH
+                                        RECURSIVE ProductHierarchyInternal AS (
+                                        SELECT
+                                            id,
+                                            MODULE_PARENT_ID,
+                                            PARENT_ID,
+                                            LEVEL,
+                                            MODULE_LEVEL,
+                                            NAME,
+                                            TYPE,
+                                            MODULE_ID,
+                                            product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO
+                                        WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 AND MODULE_PARENT_ID = 13076
+                                        UNION ALL
+                                        SELECT
+                                            c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO c
+                                                INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                                    select * from ProductHierarchyInternal
+                                ),
+                                pGroupLast as (
+                                    WITH RECURSIVE recursive_cte AS (
+                                        SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                                        FROM pGroups
+                                        WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                                        UNION ALL
+                                        SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                                        FROM pGroups t
+                                                 INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                                    )
+                                    SELECT id, name , parent , PRODUCT_ID
+                                    FROM recursive_cte
+                                )
+                            select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                            from pGroupLast as pgl
+                                     left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+                        )
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE ,
+                                     pi.DECIMAL_NUM ,
+                                     pg.group_product_id, pg.group_product_name
+                    from productsInfo as pi
+                             join productGroup as pg on pi.product_id = pg.PRODUCT_ID
+                ),
+                group_motefareghe as (
+                    select wspi2.id as group_product_id, wspi2.name as group_product_name ,wp.id as product_id, wp.full_name as  product_full_Name ,FULL_CODE
+                    from WH_SETTING_PRODUCT_INFO as wspi
+                             join wh_product as wp on wspi.PRODUCT_ID = wp.id
+                             join WH_SETTING_PRODUCT_INFO as wspi2 on wspi.MODULE_PARENT_ID = wspi2.id
+                    where wspi.MODULE_PARENT_ID = 18721
+                ),
+                group_sazmani as (
+                    with
+                        productsInfo as (
+                            with
+                                products as (
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE
+                                    from wh_product as p
+                                ) ,
+                                product_attr as (
+                                    select wcf.name product_attr_name , wpad.REFERENCE_ID as product_id , wpad.content as product_attr_value , wpa.BAR_CODE  as product_bar_code , wpa.id as product_attr_id
+                                    from WH_PR_ATTRIBUTE_DETAIL as wpad
+                                             join wh_product_attribute as wpa on wpad.REFERENCE_ID = wpa.REFERENCE_ID and wpad.attribute_id = wpa.id
+                                             join wh_custom_fields as wcf on wpad.field_id = wcf.id
+                                ) ,
+                                stock_capacity as (
+                                    select id , DECIMAL_NUM
+                                    from WH_STOCK_CAPACITY as wsp
+                                )
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code ,
+                                   pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,p.FULL_CODE,
+                                   sc.DECIMAL_NUM
+                            from products as p
+                                     left join stock_capacity as sc  on p.CAPACITY_ID = sc.id
+                                     left join product_attr as pa on p.product_id = pa.product_id
+                        ),
+                        productGroup as (
+                            with
+                                pGroups as  (
+                                    WITH
+                                        RECURSIVE ProductHierarchyInternal AS (
+                                        SELECT
+                                            id,
+                                            MODULE_PARENT_ID,
+                                            PARENT_ID,
+                                            LEVEL,
+                                            MODULE_LEVEL,
+                                            NAME,
+                                            TYPE,
+                                            MODULE_ID,
+                                            product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO
+                                        WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 AND MODULE_PARENT_ID = 32109
+                                        UNION ALL
+                                        SELECT
+                                            c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO c
+                                                INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                                    select * from ProductHierarchyInternal
+                                ),
+                                pGroupLast as (
+                                    WITH RECURSIVE recursive_cte AS (
+                                        SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                                        FROM pGroups
+                                        WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                                        UNION ALL
+                                        SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                                        FROM pGroups t
+                                                 INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                                    )
+                                    SELECT id, name , parent , PRODUCT_ID
+                                    FROM recursive_cte
+                                )
+                            select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                            from pGroupLast as pgl
+                                     left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+                        )
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE,
+                                     pi.DECIMAL_NUM ,
+                                     pg.group_product_id, pg.group_product_name
+                    from productsInfo as pi
+                             join productGroup as pg on pi.product_id = pg.PRODUCT_ID
+                ),
+                group_gaming as (
+                    with
+                        productsInfo as (
+                            with
+                                products as (
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE
+                                    from wh_product as p
+                                ) ,
+                                product_attr as (
+                                    select wcf.name product_attr_name , wpad.REFERENCE_ID as product_id , wpad.content as product_attr_value , wpa.BAR_CODE  as product_bar_code , wpa.id as product_attr_id
+                                    from WH_PR_ATTRIBUTE_DETAIL as wpad
+                                             join wh_product_attribute as wpa on wpad.REFERENCE_ID = wpa.REFERENCE_ID and wpad.attribute_id = wpa.id
+                                             join wh_custom_fields as wcf on wpad.field_id = wcf.id
+                                ) ,
+                                stock_capacity as (
+                                    select id , DECIMAL_NUM
+                                    from WH_STOCK_CAPACITY as wsp
+                                )
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code ,
+                                   pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,p.FULL_CODE,
+                                   sc.DECIMAL_NUM
+                            from products as p
+                                     left join stock_capacity as sc  on p.CAPACITY_ID = sc.id
+                                     left join product_attr as pa on p.product_id = pa.product_id
+                        ),
+                        productGroup as (
+                            with
+                                pGroups as  (
+                                    WITH
+                                        RECURSIVE ProductHierarchyInternal AS (
+                                        SELECT
+                                            id,
+                                            MODULE_PARENT_ID,
+                                            PARENT_ID,
+                                            LEVEL,
+                                            MODULE_LEVEL,
+                                            NAME,
+                                            TYPE,
+                                            MODULE_ID,
+                                            product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO
+                                        WHERE MODULE_ID = 23 AND VOUCHER_ALLOW = 0 AND TYPE = 1 AND MODULE_PARENT_ID = 32367
+                                        UNION ALL
+                                        SELECT
+                                            c.id, c.MODULE_PARENT_ID, c.PARENT_ID, c.LEVEL, c.MODULE_LEVEL, c.NAME, c.TYPE, c.MODULE_ID , c.product_id
+                                        FROM
+                                            WH_SETTING_PRODUCT_INFO c
+                                                INNER JOIN ProductHierarchyInternal p ON p.id = c.MODULE_PARENT_ID)
+                                    select * from ProductHierarchyInternal
+                                ),
+                                pGroupLast as (
+                                    WITH RECURSIVE recursive_cte AS (
+                                        SELECT id, name, MODULE_PARENT_ID as parent , PRODUCT_ID
+                                        FROM pGroups
+                                        WHERE id NOT IN (SELECT MODULE_PARENT_ID FROM pGroups WHERE MODULE_PARENT_ID IS NOT NULL)
+                                        UNION ALL
+                                        SELECT t.id, t.name, t.MODULE_PARENT_ID , r.PRODUCT_ID
+                                        FROM pGroups t
+                                                 INNER JOIN recursive_cte r ON t.MODULE_PARENT_ID = r.id
+                                    )
+                                    SELECT id, name , parent , PRODUCT_ID
+                                    FROM recursive_cte
+                                )
+                            select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
+                            from pGroupLast as pgl
+                                     left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+                        )
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value ,pi.FULL_CODE,
+                                     pi.DECIMAL_NUM ,
+                                     pg.group_product_id, pg.group_product_name
+                    from productsInfo as pi
+                             join productGroup as pg on pi.product_id = pg.PRODUCT_ID
+                )
+            select distinct group_product_id, group_product_name ,product_id, product_full_Name ,12648 as group_main_id ,"کامپیوتری" as center_name ,FULL_CODE from group_compiuter
+            union
+            select distinct group_product_id, group_product_name ,product_id, product_full_Name ,12905 as group_main_id ,"موبایلی" as center_name ,FULL_CODE from group_mobili
+            union
+            select distinct group_product_id, group_product_name ,product_id, product_full_Name ,13076 as group_main_id ,"صوتی و تصویری" as center_name ,FULL_CODE from group_soti
+            union
+            select distinct group_product_id, group_product_name ,product_id, product_full_Name ,18721 as group_main_id ,"--" as center_name ,FULL_CODE from group_motefareghe
+            union
+            select distinct group_product_id, group_product_name ,product_id, product_full_Name ,32109 as group_main_id ,"--" as center_name ,FULL_CODE from group_sazmani
+            union
+            select distinct group_product_id, group_product_name ,product_id, product_full_Name ,32367 as group_main_id ,"گیمینگ" as center_name ,FULL_CODE from group_gaming
+        )
+    select p.* , wh.NAME as group_main_name  from products as p
+    left join WH_SETTING_PRODUCT_INFO as wh on p.group_main_id = wh.id
+)
+select * from data
+
+
+
+

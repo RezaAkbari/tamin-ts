@@ -1,0 +1,130 @@
+[
+
+  {
+   
+    "all" : false ,
+    "groupId": 12648 ,
+    "groupName" : "کامپیوتری" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ] ,
+    "agents_members" : [
+      998116 , 11155
+    ]
+  } ,
+
+
+  {
+   
+    "all" : false ,
+    "groupId": 12905 ,
+    "groupName" : "موبایلی" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ],
+    "agents_members" : [
+      998116 , 11155
+    ]
+  } ,
+
+
+
+
+  {
+   
+    "all" : false ,
+    "groupId": 13076 ,
+    "groupName" : "صوتی و تصویری" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ],
+    "agents_members" : [
+      998116 , 11155
+    ]
+  } ,
+
+
+
+  {
+   
+    "all" : false ,
+    "groupId": 18721 ,
+    "groupName" : "متفرقه" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ],
+    "agents_members" : [
+      998116 , 11155
+    ]
+  } ,
+
+
+
+  {
+   
+    "all" : false ,
+    "groupId": 32367 ,
+    "groupName" : "گیم" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ],
+    "agents_members" : [
+      998116 , 11155
+    ]
+  } ,
+
+
+
+
+  {
+   
+    "all" : false ,
+    "groupId": 32109 ,
+    "groupName" : "سازمانی" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ],
+    "agents_members" : [
+      998116 , 11155
+    ]
+  } ,
+
+
+
+
+  {
+    "all" : true ,
+    "groupId": 0 ,
+    "groupName" : "سازمانی" ,
+    "agents_full" : [
+      998116
+    ],
+    "agents_download" : [
+
+    ],
+    "agents_members" : [
+      998116 , 11155
+    ]
+  }
+
+
+
+]
