@@ -117,7 +117,7 @@ function setListDataExcel(exp){
 
 
             "center_name": item["center_name"],//k
-            "center_value": item["center_value"],//l
+            "center_value": item["center_value"],//l asd
             "center_percent":   { t: "n", f:  "=ROUND(((L"+itemIndex+"/U"+itemIndex+")*100), 2)"  }    ,//m   =ROUND(((H18/T18)*100), 2)
             "center_after_edit_value_offer": { t: "n", f:  "=ROUNDDOWN((m"+itemIndex+"*v"+itemIndex+")/100, 0)" },//n  =ROUNDDOWN((I2*U2)/100, 0)
             "center_after_edit_value": item["center_after_edit_value"],//o
