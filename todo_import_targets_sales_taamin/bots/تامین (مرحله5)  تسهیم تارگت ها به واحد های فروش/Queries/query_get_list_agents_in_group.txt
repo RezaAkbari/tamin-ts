@@ -1,0 +1,2 @@
+select distinct ref_id  from supply_unit_product_centers_percent
+where group_id=? and percent>0

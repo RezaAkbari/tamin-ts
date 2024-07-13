@@ -468,6 +468,94 @@ end
 
 ----------------------------------
 
+function readyStepOneListAgents(data)
+    local listAgents = getListAgentsValidates();
+
+    local listExp = {};
+    local status=true;
+    local msg = "";
+    for i = 1 , #data , 1 do
+        local itemData = data[i];
+        local resData = perperationItemDataProduct(itemData , index+2 , listAgents);
+        if resData~=nil then
+
+        end
+    end
+end
+function perperationItemDataProduct(itemData , index  ,   listAgents )
+    local exp = nil;
+    local status = false;
+    local msg =  "پارامتر ورودی کالای ردیف" .. index .. "داده غلط وارد شده است .";
+    if itemData.product_id ~= nil then
+        local agents = perperationItemDataAgents(itemData , index  ,  listAgents);
+        status = agents.status;
+        msg = agents.msg;
+        if exp ~= nil and status== true  then
+            exp = {
+                product_group_main_id = itemData.product_group_main_id ,
+                product_group_id = itemData.product_group_id ,
+                product_id = itemData.product_id ,
+                month = itemData.month ,
+                year = itemData.year ,
+                agents = agents.exp
+            };
+        end
+    end
+    return exp , status , msg ,
+end
+function perperationItemDataAgents(itemData , index , listAgents)
+    local expAgents = {};
+    for key, value in pairs(itemData) do
+        if string.match(key, "agent_percent_") then
+            local agentArray =  explodeToArray(key , "_");
+            local result = {
+                ref_id = ref_id ,
+                ref_name = ref_name ,
+                type = type ,
+                group_id = tonumber(group[3]) ,
+                percent = value
+            };
+            table.insert(dataExp , result)
+        end
+    end
+    return expAgents = {};
+end
+function checkG
+
+
+
+function getListAgentsValidates()
+    local resultExp = {};
+    local param = {
+        query = teamyar.get_attachment("query_get_list_agents_in_group.txt") ,
+        params = {accessGroupId}
+    }
+    db.use_db("0000000_bot")
+    db.query(param)
+    local record = {}
+    while db.query_fetch(record) do
+        table.insert(resultExp, {
+            ref_id =record[1]
+        })
+    end
+    db.use_db("0000000")
+    return resultExp;
+end
+
+
+
+function explodeToArray (inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t={}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+        table.insert(t, str)
+    end
+    return t
+end
+
+
 
 ----------------------------------
 local params = teamyar.get_input();
@@ -495,13 +583,13 @@ elseif method == "insert" then
     if params.__data__ ~= nil and accessFull  then
         local jsonData = params.__data__;
         --local jsonData = json.decode(params.__data__);
-        executeData(jsonData);
+        teamyar.write_log(json.encode(jsonData))
+        --executeData(jsonData);
         response.msg = "عملیات با موفقیت انجام شد.";
         response.status = true;
     end
     teamyar.write_result(json.encode(response))
 end
-
 
 
 
