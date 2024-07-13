@@ -7,7 +7,7 @@ function setListDataExcel(exp){
     let headers = {
         "ref_id": "شناسه عامل فروش/مرکز",
         "ref_name": "نام عامل فروش/مرکز",
-        "type": "نام عامل فروش/مرکز",
+        "type": "نوع عامل فروش/مرکز",
     }
 
     const excel = [];

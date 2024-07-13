@@ -11,7 +11,7 @@ function createTable()
     db.use_db("0000000_bot")
     local params = {
         name = _tableName,
-        fields = " id BIGINT NOT NULL AUTO_INCREMENT ,ref_id bigint not null ,group_id bigint not null , percent int not null , type int default(0)  not null  ",
+        fields = " id BIGINT NOT NULL AUTO_INCREMENT ,ref_id bigint not null ,ref_name varchar(900) not null ,group_id bigint not null , percent float not null , type int default(0)  not null  ",
         index_items = {{1, "primary", "id"}}
     };
     db.check_table(params);
@@ -22,7 +22,7 @@ function selectData()
     createTable()
     db.use_db("0000000_bot")
     local param = {
-        query = "SELECT id , ref_id , percent ,group_id,  type FROM " .. _tableName,
+        query = "SELECT id , ref_id ,ref_name, percent ,group_id,  type FROM " .. _tableName,
         params = {}
     }
     local result = {}
@@ -32,9 +32,10 @@ function selectData()
         table.insert(result, {
             id = record[1],
             ref_id = record[2],
-            percent = record[3],
-            group_id = record[4],
-            type = record[5],
+            ref_name = record[3],
+            percent = record[4],
+            group_id = record[5],
+            type = record[6]
         })
     end
     db.query_free()
@@ -50,20 +51,16 @@ function executeData(listData)
     for i = 1 , #listData , 1 do
         local itemData = listData[i];
 
-        --teamyar.write_log(json.encode(itemData))
-        --teamyar.write_log(json.encode(checkExistData(listGroups ,  itemData.group_id)))
-        --teamyar.write_log(json.encode(checkExistData(listAgents ,  itemData.ref_id)))
-        --teamyar.write_log(json.encode(checkExistData(listCenters ,  itemData.ref_id)))
-
-        if itemData.ref_id ~= nil and  itemData.percent ~= nil and  itemData.group_id ~= nil and  itemData.type ~= nil and
+        if itemData.ref_id ~= nil and itemData.ref_name ~= nil and  itemData.percent ~= nil and  itemData.group_id ~= nil and  itemData.type ~= nil and
                 checkExistData(listGroups ,  itemData.group_id) and
                 ((itemData.type == _CONST_TYPE_CENTER._AGENT and checkExistData(listAgents ,  itemData.ref_id)) or (itemData.type == _CONST_TYPE_CENTER._CENTER and checkExistData(listCenters ,  itemData.ref_id)))then
 
-            local checkExist = checkExistRow( itemData.ref_id,itemData.group_id, itemData.type );
-            if checkExist== true then
-                updateData(itemData.ref_id ,itemData.percent ,itemData.group_id ,itemData.type );
+            local checkExist = checkExistRow( itemData.ref_id ,itemData.group_id, itemData.type );
+
+            if checkExist == true then
+                updateData(itemData.ref_id ,itemData.ref_name , itemData.percent ,itemData.group_id ,itemData.type );
             else
-                insertData(itemData.ref_id ,itemData.percent ,itemData.group_id ,itemData.type );
+                insertData(itemData.ref_id ,itemData.ref_name , itemData.percent ,itemData.group_id ,itemData.type );
             end
         end
     end
@@ -89,20 +86,20 @@ function checkExistRow(ref_id ,group_id, type )
     return false;
 end
 
-function insertData(ref_id , percent ,group_id ,  type)
+function insertData(ref_id ,ref_name, percent ,group_id ,  type)
     createTable();
     db.start();
     db.use_db("0000000_bot")
     local params = {
-        query = "insert into " .. _tableName .. " (ref_id,percent ,group_id, type) values (?,?,?,?)",
-        params = {ref_id, percent,group_id, type}
+        query = "insert into " .. _tableName .. " (ref_id,ref_name,percent ,group_id, type) values (?,?,?,?,?)",
+        params = {ref_id,ref_name, percent,group_id, type}
     };
     db.query_immediate(params)
     db.commit();
     db.use_db("0000000");
 end
 
-function updateData(ref_id , percent ,group_id, type )
+function updateData(ref_id ,ref_name, percent ,group_id, type )
     createTable();
     db.start();
     db.use_db("0000000_bot")
@@ -199,7 +196,7 @@ function readyListDataFromDataBase(listExp)
             local itemDataBase = listDataBase[x];
             if itemExp.ref_id ~= nil and  itemExp.group_id ~= nil and itemExp.type ~= nil  and
                     itemDataBase.ref_id ~= nil and itemDataBase.percent ~= nil and  itemDataBase.group_id ~= nil and itemDataBase.type ~= nil  and
-                    itemDataBase.ref_id ~= itemExp.ref_id and itemDataBase.group_id ~= itemExp.group_id  and itemDataBase.type ~= itemDataBase.type  then
+                    itemDataBase.ref_id == itemExp.ref_id and itemDataBase.group_id == itemExp.group_id  and itemDataBase.type == itemExp.type  then
 
                 listExp[i].percent = itemDataBase.percent;
                 break;
@@ -216,8 +213,9 @@ function readyGetData(data)
     for i = 1 , #data, 1 do
         local itemData = data[i];
 
-        if itemData ~= nil and itemData.ref_id ~= nil and itemData.ref_id ~= "" and itemData.type ~= nil then
+        if itemData ~= nil and itemData.ref_id ~= nil and  itemData.ref_id ~= "" and itemData.ref_name ~= nil and itemData.type ~= nil then
             local ref_id =  itemData.ref_id;
+            local ref_name =  itemData.ref_name;
             local type =  itemData.type;
 
             for key, value in pairs(itemData) do
@@ -225,11 +223,11 @@ function readyGetData(data)
                     local group =  explodeToArray(key , "_");
                     local result = {
                         ref_id = ref_id ,
+                        ref_name = ref_name ,
                         type = type ,
                         group_id = tonumber(group[3]) ,
                         percent = value
                     };
-                    teamyar.write_log(json.encode(result))
                     table.insert(dataExp , result)
                 end
             end

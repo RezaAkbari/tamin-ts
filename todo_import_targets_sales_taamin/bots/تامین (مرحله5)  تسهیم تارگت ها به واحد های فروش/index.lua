@@ -24,7 +24,7 @@ function createTable()
     db.use_db("0000000_bot")
     local params = {
         name = _tableName,
-        fields =" id BIGINT NOT NULL AUTO_INCREMENT , target_id  BIGINT NOT NULL , agent_id bigint not null , agent_value bigint default(0)   ",
+        fields =" id BIGINT NOT NULL AUTO_INCREMENT , target_id  BIGINT NOT NULL , agent_id bigint not null , agent_value bigint default(0)  , agent_percent bigint default(0)   ",
 
         index_items = {{1, "primary", "id"}}
     };
@@ -35,14 +35,14 @@ end
 
 
 
-function selectData(year , month)
+function selectData()
     createTable()
 
     db.use_db("0000000_bot")
 
     local param = {
-        query = "SELECT id , target_id  , agent_id , agent_value  month FROM " .. _tableName .. " where year=? and month=? ",
-        params = {year , month }
+        query = "SELECT id , target_id  , agent_id , agent_value  , agent_percent  FROM " .. _tableName,
+        params = { }
     }
     local result = {}
     db.query(param)
@@ -52,7 +52,8 @@ function selectData(year , month)
             id = record[1],
             target_id = record[2],
             agent_id = record[3],
-            agent_value = record[4]
+            agent_value = record[4],
+            agent_percent = record[5]
         })
     end
     db.query_free()
@@ -66,12 +67,12 @@ function executeData(listData)
     for i = 1 , #listData , 1 do
         local itemData = listData[i];
 
-        if  itemData.product_id ~= nil and itemData.agent_id ~= nil and itemData.agent_value ~= nil then
+        if  itemData.product_id ~= nil and itemData.agent_id ~= nil and itemData.agent_value ~= nil and itemData.agent_percent ~= nil then
 
             local year = tonumber(itemData.year);
             local month = tonumber(itemData.month);
 
-            local accessFull , accessDownload , agentMembers = checkAccessClient()
+            --[[local accessFull , accessDownload , agentMembers = checkAccessClient()
             local listAgents = checkAgentMembers(agentMembers);
 
             local existAgent = false;
@@ -87,9 +88,9 @@ function executeData(listData)
                 local targetId = getTargetId( itemData.product_id ,  year ,  month);
                 if targetId ~= nil and targetId > 0 then
                     deleteRecordTargetSelected(targetId)
-                    insertData(targetId , itemData.agent_id ,itemData.agent_value );
+                    insertData(targetId , itemData.agent_id ,itemData.agent_value ,itemData.agent_percent );
                 end
-            end
+            end]]
 
 
         end
@@ -135,13 +136,13 @@ function deleteRecordTargetSelected(targetId)
     db.use_db("0000000");
 end
 
-function insertData(target_id , agent_id , agent_value  )
+function insertData(target_id , agent_id , agent_value ,agent_percent  )
     createTable();
     db.start();
     db.use_db("0000000_bot")
     local params = {
-        query = "insert into " .. _tableName .. " (target_id  , agent_id , agent_value ) values (?,?,?)",
-        params = {target_id  , agent_id , agent_value }
+        query = "insert into " .. _tableName .. " (target_id  , agent_id , agent_value , agent_percent) values (?,?,?,?)",
+        params = {target_id  , agent_id , agent_value , agent_percent }
     };
     db.query_immediate(params)
     db.commit();
@@ -154,12 +155,16 @@ function readyListProduct(year , month )
     createTable();
     local listProduct = getProductGroupSelected();
     local listProductTamin = getListProductTamin(year , month);
-    listProduct = readyListWithProductTamin(listProduct , listProductTamin)
-   --[[ listProduct = readyListProductWithAttr(listProduct);
+    listProduct = readyListWithProductTamin(listProduct , listProductTamin);
+    listProduct = readyListWithAgents(listProduct)
 
-    listProduct = readylistTaminProduct(listProduct , year , month );]]
+    local listAgents = getListAgents();
 
-    return listProduct;
+    --- اضافه شدن رکورد قبلی که ذخیره شده است
+    return {
+        list = listProduct ,
+        agents = listAgents
+    };
 end
 
 
@@ -199,6 +204,7 @@ function getProductGroupSelected()
         local record = {}
         while db.query_fetch(record) do
             table.insert(listExp, {
+                id = 0,
                 product_group_main_id = record[1],
                 product_group_main_name = record[2],
 
@@ -219,13 +225,12 @@ function getProductGroupSelected()
                 center_total = 0 ,
 
                 year = "",
-                month =""
+                month ="" ,
+                agents = {}
             })
         end
 
     end
-
-    teamyar.write_log(json.encode(listExp))
 
     return listExp
 end
@@ -261,6 +266,7 @@ function getQuerySelectGroup(query , id , name)
     return query , status;
 end
 
+
 function getListProductTamin(year , month)
     local resultExp = {};
 
@@ -293,8 +299,6 @@ function getListProductTamin(year , month)
 
     return resultExp;
 end
-
-
 function readyListWithProductTamin(listProduct , listProductTamin)
 
     local resultExp = {};
@@ -307,8 +311,9 @@ function readyListWithProductTamin(listProduct , listProductTamin)
 
             if itemProduct.product_id == itemProductTamin.product_id then
 
-                itemProduct.description = itemProductTamin.description
+                itemProduct.id = itemProductTamin.id
 
+                itemProduct.description = itemProductTamin.description
 
                 local product_manufactured = _CONST_PRODUCT_MANUFACTORED._N
                 if itemProductTamin.product_manufactured == 1 then
@@ -351,15 +356,68 @@ function readyListWithProductTamin(listProduct , listProductTamin)
     return resultExp;
 end
 
+function readyListWithAgents(listProduct)
+    local listRecords = selectData();
+
+    for i = 1 , #listProduct , 1 do
+        local itemProduct = listProduct[i];
+        if itemProduct ~= nil and itemProduct.id ~= nil then
+            for x= 1 , #listRecords , 1 do
+                local itemRecord = listRecords[x];
+
+
+
+                if itemRecord ~= nil and itemRecord.target_id~= nil and itemRecord.target_id == itemProduct.id and
+                        itemRecord.agent_id ~= nil and itemRecord.agent_value ~= nil and itemRecord.agent_percent ~= nil  then
+
+                    teamyar.write_log(json.encode(itemRecord));
+                    table.insert(listProduct[i].agents , {
+                        id = itemRecord.agent_id ,
+                        value = itemRecord.agent_value ,
+                        percent = itemRecord.agent_percent
+                    })
+                end
+
+            end
+        end
+    end
+
+    return listProduct;
+end
+
+
+
+
+
+function getListAgents()
+    local resultExp = {};
+    local param = {
+        query = teamyar.get_attachment("query_get_list_agent.txt") ,
+        params = {accessGroupId  }
+    }
+    db.use_db("0000000_bot")
+    db.query(param)
+    local record = {}
+    while db.query_fetch(record) do
+        table.insert(resultExp, {
+            id =record[1],
+            ref_id =record[2],
+            ref_name =record[3],
+            group_id =record[4],
+            percent =record[5]
+
+        })
+    end
+    db.use_db("0000000")
+    return resultExp;
+end
 
 
 
 ----------------------------------
-
-function checkAccessClient()
+function checkAccessClient(listAgents)
     local accessFull = false;
     local accessDownload = false;
-    local agentMembers = {};
 
     local user = teamyar.get_user_info();
     if user.id ~= nil then
@@ -396,10 +454,6 @@ function checkAccessClient()
                         end
                     end
 
-                    if itemAccess.agents_members ~= nil and type(itemAccess.agents_members ) == "table"  then
-                        agentMembers = itemAccess.agents_members;
-                    end
-
                     break;
                 end
             end
@@ -408,43 +462,9 @@ function checkAccessClient()
 
     end
 
-    return accessFull , accessDownload , agentMembers;
+    return accessFull , accessDownload;
 end
 
-function checkAgentMembers(agentMembers)
-    local query = teamyar.get_attachment("query_agentMembers.txt")
-    local str =" REFFERE_ID  in ( ";
-    for i=1, #agentMembers , 1 do
-        local item = agentMembers[i];
-        if item ~= nil then
-            str = str .. tostring(item);
-        end
-        if i < #agentMembers then
-            str = str .. " , ";
-        end
-    end
-    str = str .. " ) ";
-    query = string.gsub(query , "{{agentMembers}}" , str);
-
-
-    local param = {
-        query = query ,
-        param = {}
-    }
-    db.query(param)
-    local record = {}
-    while db.query_fetch(record) do
-        table.insert(listExp, {
-            id = record[1],
-            name = record[2],
-            REFFERE_ID = record[3]
-        })
-
-    end
-
-    return record;
-
-end
 
 ----------------------------------
 
@@ -457,7 +477,7 @@ local method = params.method;
 if params.groupId ~= nil then
     accessGroupId = params.groupId;
 end
-local accessFull , accessDownload , agentMembers= checkAccessClient();
+local accessFull , accessDownload = checkAccessClient();
 
 if method == "" or method == nil then
     local template = teamyar.get_attachment("template.html")

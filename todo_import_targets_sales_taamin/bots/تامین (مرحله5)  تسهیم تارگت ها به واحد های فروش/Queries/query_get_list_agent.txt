@@ -1,0 +1,2 @@
+select id , ref_id , ref_name , group_id , percent from supply_unit_product_centers_percent
+where group_id=? and percent > 0

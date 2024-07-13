@@ -34,7 +34,20 @@ for (let i = 0 ; i<alphabetsSample.length ; i++){
         alphabesOther.push(itemA+itemB)
     }
 }
-alphabets.concat(alphabesOther);
+
+for (let i = 0 ; i<alphabesOther.length ; i++){
+    const itemA = alphabesOther[i];
+    alphabets.push(itemA);
+}
+
+
+
+console.log(alphabesOther , alphabets)
+function getAlphabet(){
+    return alphabets;
+}
+
+
 
 
 function convertExcelToJson(file, callback) {
@@ -152,7 +165,7 @@ function readyDataExcel(headers=[], datas=[] , sum=null){
                 }
             })*/;
             if (exist){
-                rowTotal[itemHeader] = { t: "n", f:  "=SUM("+alphabet+"3:"+alphabet+(dataExp.length).toString()+")"  };
+                rowTotal[itemHeader] = { t: "n", f:  "=SUM("+alphabet+"3:"+alphabet+(dataExp.length+1).toString()+")"  };
             }
             else{
                 rowTotal[itemHeader] = "";
