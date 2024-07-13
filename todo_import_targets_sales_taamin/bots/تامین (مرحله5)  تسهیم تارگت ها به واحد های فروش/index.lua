@@ -472,21 +472,26 @@ function readyStepOneListAgents(data)
     local listAgents = getListAgentsValidates();
 
     local listExp = {};
-    local status=true;
-    local msg = "";
+    local statusTotal=true;
+    local msgTotal = "";
     for i = 1 , #data , 1 do
         local itemData = data[i];
-        local resData = perperationItemDataProduct(itemData , index+2 , listAgents);
-        if resData~=nil then
-
+        local exp , status , msg = perperationItemDataProduct(itemData , index+2 , listAgents);
+        if exp~=nil and status == true then
+            table.insert(listExp , exp)
+        else
+            statusTotal = false;
+            msgTotal = msg;
+            break;
         end
     end
+    return listExp;
 end
 function perperationItemDataProduct(itemData , index  ,   listAgents )
     local exp = nil;
     local status = false;
     local msg =  "پارامتر ورودی کالای ردیف" .. index .. "داده غلط وارد شده است .";
-    if itemData.product_id ~= nil then
+    if itemData.product_group_main_id ~= nil and itemData.product_group_id ~= nil  and itemData.product_id ~= nil  and itemData.month ~= nil  and itemData.year ~= nil then
         local agents = perperationItemDataAgents(itemData , index  ,  listAgents);
         status = agents.status;
         msg = agents.msg;
@@ -504,23 +509,36 @@ function perperationItemDataProduct(itemData , index  ,   listAgents )
     return exp , status , msg ,
 end
 function perperationItemDataAgents(itemData , index , listAgents)
-    local expAgents = {};
+    local exp = { };
+    local status = true;
+    local msg =  "";
     for key, value in pairs(itemData) do
         if string.match(key, "agent_percent_") then
             local agentArray =  explodeToArray(key , "_");
-            local result = {
-                ref_id = ref_id ,
-                ref_name = ref_name ,
-                type = type ,
-                group_id = tonumber(group[3]) ,
-                percent = value
-            };
-            table.insert(dataExp , result)
+            local agentId = tonumber(group[3]);
+            if checkExistAgentSelected(agentId , listAgents) == true then
+                table.insert(exp , {
+                    agentId = agent_id ,
+                    agentValue = value
+                });
+            else
+                status = false
+                msg =  "یکی از عاملین فروش  کالای ردیف" .. index .. "داده غلط وارد شده است .";
+                break;
+            end
         end
     end
-    return expAgents = {};
+    return exp , status , msg;
 end
-function checkG
+function checkExistAgentSelected(agentId , listAgents )
+    for i=0 , #listAgents, 1 do
+        local itemAgentId = listAgents[i];
+        if itemAgentId == agentId then
+            return true;
+        end
+    end
+    return false;
+end
 
 
 
@@ -534,9 +552,7 @@ function getListAgentsValidates()
     db.query(param)
     local record = {}
     while db.query_fetch(record) do
-        table.insert(resultExp, {
-            ref_id =record[1]
-        })
+        table.insert(resultExp, record[1])
     end
     db.use_db("0000000")
     return resultExp;
