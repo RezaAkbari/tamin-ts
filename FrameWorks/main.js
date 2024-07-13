@@ -176,15 +176,46 @@ ty__main.uploadFileExcel = function (){
 function requestInsertData(json , url ) {
 
     fetchData(url , json )
-        .then((result) => {
+        .then((response) => {
+            if (response.hasOwnProperty("data")){
+                return response.data;
+            }
             $.Teamyar.confirm({
-                message: "عملیات با موفقیت انجام شد"
+                message: getElementTitlePopup(true) + " فرمت پاسخ صحیح نمی باشد "
+            });
+        })
+        .then((data) => {
+            console.log(data)
+            let msg = "مشکلی در پردازش داده های برگشتی رخ داده است";
+            if (data.hasOwnProperty("status")){
+                if(data.status){
+                    msg = getElementTitlePopup() + "عملیات با موفقیت انجام شد";
+                }
+                else{
+                    if(data.msg){
+                        msg =getElementTitlePopup(true) +  data.msg;
+                    }
+                }
+            }
+
+            console.log(data);
+            $.Teamyar.confirm({
+                message: msg
             });
     });
-
 }
 
-
+function getElementTitlePopup(isError=false) {
+    let title = "موفق"
+    let classElement = "bg-success";
+    if(isError){
+        title = "خطا"
+        classElement = "bg-danger"
+    }
+    return '<span class="'+classElement+' rounded text-white mx-2 px-2">'
+        +title+
+        '</span>'
+}
 
 
 

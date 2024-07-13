@@ -174,18 +174,6 @@ function setListDataExcel(exp){
                 indexAlphabet ++;
                 listSumValue.push(alphabets[indexAlphabet]+itemIndex);
 
-
-                /*for (let y = 0; y < listExp.length; y++) {
-                    const itemExp = listExp[y];
-                    if ( item.hasOwnProperty("ref_id") && item.hasOwnProperty("type") && itemGroup.hasOwnProperty("id") &&
-                        itemExp.hasOwnProperty("ref_id") && itemExp.hasOwnProperty("type") && itemExp.hasOwnProperty("group_id") && itemExp.hasOwnProperty("percent") &&
-                        item.ref_id ===  itemExp.ref_id && item.type ===  itemExp.type && itemGroup.id ===  itemExp.group_id  ){
-
-                        excel[i]["group_percent_"+ itemGroup.id] = itemExp.percent;
-                        break;
-                    }
-                }*/
-
             }
 
 

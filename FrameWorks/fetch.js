@@ -14,7 +14,7 @@ async function fetchData(url, data={} , method= "post" , contentType = "applicat
 
         const response = await fetch(url , options);
         console.log(response);
-        const responseData = response.headers.get("Content-Type")?.includes("application/json") ? await response.json() : {};
+        const responseData = await response.json();
 
         if (!response.ok){
             throw  new Error("Failed to response data");

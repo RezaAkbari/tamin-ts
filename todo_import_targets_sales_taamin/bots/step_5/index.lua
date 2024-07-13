@@ -13,6 +13,8 @@ local _CONST_PRODUCT_ACTIVE = {
 
 
 
+
+
 ----------------
 local all = false;
 local accessGroupId =12648;
@@ -24,7 +26,7 @@ function createTable()
     db.use_db("0000000_bot")
     local params = {
         name = _tableName,
-        fields =" id BIGINT NOT NULL AUTO_INCREMENT , target_id  BIGINT NOT NULL , agent_id bigint not null , agent_value bigint default(0)  , agent_percent bigint default(0)   ",
+        fields =" id BIGINT NOT NULL AUTO_INCREMENT , target_id  BIGINT NOT NULL , agent_id bigint not null , agent_value float default(0)  , agent_percent float default(0)   ",
 
         index_items = {{1, "primary", "id"}}
     };
@@ -63,53 +65,28 @@ end
 
 
 function executeData(listData)
-
     for i = 1 , #listData , 1 do
         local itemData = listData[i];
-
-        if  itemData.product_id ~= nil and itemData.agent_id ~= nil and itemData.agent_value ~= nil and itemData.agent_percent ~= nil then
-
-            local year = tonumber(itemData.year);
-            local month = tonumber(itemData.month);
-
-            --[[local accessFull , accessDownload , agentMembers = checkAccessClient()
-            local listAgents = checkAgentMembers(agentMembers);
-
-            local existAgent = false;
-            for x = 1 , #listAgents , 1 do
-                local itemAgent = listAgents[x];
-                if itemAgent ~= nil then
-                    existAgent = true;
-                    break;
-                end
-            end
-
-            if existAgent == true then
-                local targetId = getTargetId( itemData.product_id ,  year ,  month);
-                if targetId ~= nil and targetId > 0 then
-                    deleteRecordTargetSelected(targetId)
-                    insertData(targetId , itemData.agent_id ,itemData.agent_value ,itemData.agent_percent );
-                end
-            end]]
-
-
+        if  itemData.product_id ~= nil and itemData.agent_id ~= nil and itemData.agent_value ~= nil and itemData.agent_percent ~= nil  and itemData.year ~= nil and itemData.month ~= nil then
+            local targetId = getTargetId(itemData.product_id , itemData.year , itemData.month);
+            deleteRecordTargetSelected(targetId , itemData.agent_id);
+            insertData(targetId , itemData.agent_id , itemData.agent_value , itemData.agent_percent)
         end
     end
 end
 
 function getTargetId(product_id , year , month  )
     createTable()
-    db.use_db("0000000_bot")
-
     local query = teamyar.get_attachment("query_check_exist_target_accept.txt");
-    query = string.gsub(query , "{{whereTargets}}" , " where  product_id=? and year=? and month=? ")
-
+    query = string.gsub(query , "{{whereAgent}}" , " where  product_id=? and year=? and month=? ")
     local param = {
         query = query ,
-        param = {
+        params = {
             product_id , year , month
         }
     }
+    teamyar.write_log(json.encode(param));
+    db.use_db("0000000_bot")
     local result = {}
     db.query(param)
     local record = {}
@@ -123,13 +100,13 @@ function getTargetId(product_id , year , month  )
     return nil;
 end
 
-function deleteRecordTargetSelected(targetId)
+function deleteRecordTargetSelected(targetId , agentId)
     createTable();
     db.start();
     db.use_db("0000000_bot")
     local params = {
-        query = "delete from " .. _tableName .. " where target_id=?",
-        params = {targetId}
+        query = "delete from " .. _tableName .. " where target_id=? and agent_id=?",
+        params = {targetId , agentId}
     };
     db.query_immediate(params)
     db.commit();
@@ -369,8 +346,6 @@ function readyListWithAgents(listProduct)
 
                 if itemRecord ~= nil and itemRecord.target_id~= nil and itemRecord.target_id == itemProduct.id and
                         itemRecord.agent_id ~= nil and itemRecord.agent_value ~= nil and itemRecord.agent_percent ~= nil  then
-
-                    teamyar.write_log(json.encode(itemRecord));
                     table.insert(listProduct[i].agents , {
                         id = itemRecord.agent_id ,
                         value = itemRecord.agent_value ,
@@ -467,7 +442,6 @@ end
 
 
 ----------------------------------
-
 function readyStepOneListAgents(data)
     local listAgents = getListAgentsValidates();
 
@@ -476,8 +450,9 @@ function readyStepOneListAgents(data)
     local msgTotal = "";
     for i = 1 , #data , 1 do
         local itemData = data[i];
-        local exp , status , msg = perperationItemDataProduct(itemData , index+2 , listAgents);
-        if exp~=nil and status == true then
+        local exp , status , msg = perperationItemDataProduct(itemData , i+2 , listAgents);
+
+        if exp ~=nil and status == true then
             table.insert(listExp , exp)
         else
             statusTotal = false;
@@ -485,42 +460,65 @@ function readyStepOneListAgents(data)
             break;
         end
     end
-    return listExp;
+    return listExp , statusTotal , msgTotal;
 end
 function perperationItemDataProduct(itemData , index  ,   listAgents )
     local exp = nil;
-    local status = false;
-    local msg =  "پارامتر ورودی کالای ردیف" .. index .. "داده غلط وارد شده است .";
-    if itemData.product_group_main_id ~= nil and itemData.product_group_id ~= nil  and itemData.product_id ~= nil  and itemData.month ~= nil  and itemData.year ~= nil then
-        local agents = perperationItemDataAgents(itemData , index  ,  listAgents);
-        status = agents.status;
-        msg = agents.msg;
-        if exp ~= nil and status== true  then
-            exp = {
-                product_group_main_id = itemData.product_group_main_id ,
-                product_group_id = itemData.product_group_id ,
-                product_id = itemData.product_id ,
-                month = itemData.month ,
-                year = itemData.year ,
-                agents = agents.exp
-            };
+    local statusTotal = false;
+    local msgTotal =  "پارامتر ورودی کالای ردیف " .. index .. " داده غلط وارد شده است .";
+    if itemData.product_group_main_id ~= nil and itemData.product_group_id ~= nil  and itemData.product_id ~= nil  and itemData.month ~= nil  and itemData.year ~= nil and itemData.center_value ~= nil then
+        local agents , status , msg = perperationItemDataAgents(itemData , index  ,  listAgents);
+        statusTotal = status;
+        msgTotal = msg;
+
+        if agents ~= nil and status== true  then
+            local statusPercent = checkPercentAgents(agents);
+            if statusPercent== true then
+                statusValue = checkValueAgents(agents , itemData.center_value );
+                if statusValue== true then
+                    exp = {
+                        product_group_main_id = itemData.product_group_main_id ,
+                        product_group_id = itemData.product_group_id ,
+                        product_id = itemData.product_id ,
+                        month = itemData.month ,
+                        year = itemData.year ,
+                        center_value = itemData.center_value ,
+                        agents = agents
+                    };
+                else
+                    statusTotal = false;
+                    msgTotal = "جمع سهم عاملین در ردیف " .. index .. " برابر  "  .. itemData.center_value .. " نمی باشد "
+                end
+
+            else
+                statusTotal = false;
+                msgTotal = "جمع درصد سهم عاملین در ردیف " .. index .. " 100 درصد نمی باشد"
+            end
         end
     end
-    return exp , status , msg ,
+    return exp , statusTotal , msgTotal
 end
 function perperationItemDataAgents(itemData , index , listAgents)
-    local exp = { };
+    local agents = { };
     local status = true;
     local msg =  "";
+
     for key, value in pairs(itemData) do
+        local resultItem = {
+            agentId = 0 ,
+            agentValue = 0 ,
+            agentPercent = 0
+        }
+
         if string.match(key, "agent_percent_") then
             local agentArray =  explodeToArray(key , "_");
-            local agentId = tonumber(group[3]);
+            local agentId = tonumber(agentArray[3]);
+
             if checkExistAgentSelected(agentId , listAgents) == true then
-                table.insert(exp , {
-                    agentId = agent_id ,
-                    agentValue = value
-                });
+                resultItem.agentId = agentId;
+                resultItem.agentValue = getValueAgentSelected(itemData , agentId)
+                resultItem.agentPercent = value
+                table.insert(agents , resultItem);
             else
                 status = false
                 msg =  "یکی از عاملین فروش  کالای ردیف" .. index .. "داده غلط وارد شده است .";
@@ -528,19 +526,21 @@ function perperationItemDataAgents(itemData , index , listAgents)
             end
         end
     end
-    return exp , status , msg;
+    return agents , status , msg;
 end
-function checkExistAgentSelected(agentId , listAgents )
-    for i=0 , #listAgents, 1 do
-        local itemAgentId = listAgents[i];
-        if itemAgentId == agentId then
-            return true;
+function getValueAgentSelected(itemData , agentIdSelected)
+    for key, value in pairs(itemData) do
+        if string.match(key, "agent_value_") then
+            local agentArray =  explodeToArray(key , "_");
+            local agentId = tonumber(agentArray[3]);
+
+            if agentIdSelected == agentId then
+                return value;
+            end
         end
     end
-    return false;
+    return 0;
 end
-
-
 
 function getListAgentsValidates()
     local resultExp = {};
@@ -557,9 +557,73 @@ function getListAgentsValidates()
     db.use_db("0000000")
     return resultExp;
 end
+function checkExistAgentSelected(agentId , listAgents )
+    for i=0 , #listAgents, 1 do
+        local itemAgentId = listAgents[i];
+        if itemAgentId == agentId then
+            return true;
+        end
+    end
+    return false;
+end
+function checkPercentAgents(listAgents)
+    local totalPercent = 0;
+    for i=0 , #listAgents, 1 do
+        local itemAgent = listAgents[i];
+        if itemAgent~= nil and itemAgent.agentPercent ~= nil then
+            totalPercent = totalPercent + itemAgent.agentPercent;
+        end
+    end
 
+    if totalPercent == 100 then
+        return true;
+    end
+    return false;
+end
+function checkValueAgents(listAgents , centerValue)
+    local totalValue= 0;
+    for i=0 , #listAgents, 1 do
+        local itemAgent = listAgents[i];
+        if itemAgent~= nil and itemAgent.agentValue ~= nil then
+            totalValue = totalValue + itemAgent.agentValue;
+        end
+    end
 
+    if totalValue == centerValue then
+        return true;
+    end
+    return false;
+end
 
+----------------------------------
+function readyListAgents(data)
+    local listExp = {};
+    for i=0, #data , 1 do
+        local itemData = data[i];
+        if itemData~=nil and itemData.agents ~= nil then
+            listExp = exploadAgentData(listExp , itemData, itemData.agents )
+        end
+    end
+    return listExp;
+end
+function exploadAgentData(listExp , itemData , agents)
+    for i=0, #agents , 1 do
+        local itemAgent = agents[i];
+        if itemAgent~= nil and  itemAgent.agentId ~= nil and itemAgent.agentValue ~=nil and itemAgent.agentPercent ~= nil then
+            table.insert(listExp , {
+                product_id =  itemData.product_id ,
+                year =  itemData.year ,
+                month =  itemData.month ,
+                agent_id =  itemAgent.agentId ,
+                agent_value =  itemAgent.agentValue ,
+                agent_percent =  itemAgent.agentPercent
+            })
+        end
+    end
+    return listExp;
+end
+
+----------------------------------
 function explodeToArray (inputstr, sep)
     if sep == nil then
         sep = "%s"
@@ -570,7 +634,6 @@ function explodeToArray (inputstr, sep)
     end
     return t
 end
-
 
 
 ----------------------------------
@@ -598,11 +661,19 @@ elseif method == "insert" then
     }
     if params.__data__ ~= nil and accessFull  then
         local jsonData = params.__data__;
-        --local jsonData = json.decode(params.__data__);
-        teamyar.write_log(json.encode(jsonData))
-        --executeData(jsonData);
-        response.msg = "عملیات با موفقیت انجام شد.";
-        response.status = true;
+        jsonData , status , msg = readyStepOneListAgents(jsonData);
+
+        if jsonData ~= nil and status == true  then
+            jsonData = readyListAgents(jsonData);
+            teamyar.write_log(json.encode(jsonData))
+            executeData(jsonData);
+            response.msg = "عملیات با موفقیت انجام شد.";
+            response.status = true;
+        else
+            response.msg = msg;
+            response.status = false;
+        end
+
     end
     teamyar.write_result(json.encode(response))
 end
