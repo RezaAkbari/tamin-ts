@@ -63,37 +63,63 @@ end
 
 
 function executeData(listData)
+    local index = checkStatusValidateDate(listData);
+    if index == 0 then
+        for i = 1 , #listData , 1 do
+            local itemData = listData[i];
 
-    for i = 1 , #listData , 1 do
-        local itemData = listData[i];
+            if  itemData.product_id ~= nil and itemData.product_manufactured ~= nil and itemData.product_active ~= nil and itemData.description ~= nil and itemData.center_value ~= nil and itemData.center_after_edit_value ~= nil and itemData.center_sazemani_value ~= nil and itemData.center_sazemani_after_edit_value ~= nil and itemData.after_edit_target ~= nil and itemData.year ~= nil and itemData.month ~= nil then
+                local product_active = 0
+                if itemData.product_active == _CONST_PRODUCT_ACTIVE._YES then
+                    product_active = 1
+                end
 
-        if  itemData.product_id ~= nil and itemData.product_manufactured ~= nil and itemData.product_active ~= nil and itemData.description ~= nil and itemData.center_value ~= nil and itemData.center_after_edit_value ~= nil and itemData.center_sazemani_value ~= nil and itemData.center_sazemani_after_edit_value ~= nil and itemData.after_edit_target ~= nil and itemData.year ~= nil and itemData.month ~= nil then
-            local product_active = 0
-            if itemData.product_active == _CONST_PRODUCT_ACTIVE._YES then
-                product_active = 1
-            end
+                local product_manufactured = 0
+                if itemData.product_manufactured == _CONST_PRODUCT_MANUFACTORED._Y then
+                    product_manufactured = 1
+                elseif itemData.product_manufactured == _CONST_PRODUCT_MANUFACTORED._P then
+                    product_manufactured = 2
+                elseif itemData.product_manufactured == _CONST_PRODUCT_MANUFACTORED._M then
+                    product_manufactured = 3
+                end
 
-            local product_manufactured = 0
-            if itemData.product_manufactured == _CONST_PRODUCT_MANUFACTORED._Y then
-                product_manufactured = 1
-            elseif itemData.product_manufactured == _CONST_PRODUCT_MANUFACTORED._P then
-                product_manufactured = 2
-            elseif itemData.product_manufactured == _CONST_PRODUCT_MANUFACTORED._M then
-                product_manufactured = 3
-            end
+                local year = tonumber(itemData.year);
+                local month = tonumber(itemData.month);
 
-            local year = tonumber(itemData.year);
-            local month = tonumber(itemData.month);
-
-            local checkExist = checkExistRow( itemData.product_id,  year ,  month  );
-            if checkExist== true then
-                updateData(itemData.product_id ,product_manufactured ,product_active ,itemData.description ,itemData.center_value ,itemData.center_after_edit_value ,itemData.center_sazemani_value ,itemData.center_sazemani_after_edit_value ,itemData.after_edit_target , year, month  );
-            else
-                insertData(itemData.product_id ,product_manufactured ,product_active ,itemData.description ,itemData.center_value ,itemData.center_after_edit_value ,itemData.center_sazemani_value ,itemData.center_sazemani_after_edit_value ,itemData.after_edit_target , year , month  );
+                local checkExist = checkExistRow( itemData.product_id,  year ,  month  );
+                if checkExist== true then
+                    updateData(itemData.product_id ,product_manufactured ,product_active ,itemData.description ,itemData.center_value ,itemData.center_after_edit_value ,itemData.center_sazemani_value ,itemData.center_sazemani_after_edit_value ,itemData.after_edit_target , year, month  );
+                else
+                    insertData(itemData.product_id ,product_manufactured ,product_active ,itemData.description ,itemData.center_value ,itemData.center_after_edit_value ,itemData.center_sazemani_value ,itemData.center_sazemani_after_edit_value ,itemData.after_edit_target , year , month  );
+                end
             end
         end
     end
+    return index;
 end
+function checkStatusValidateDate(listData)
+    local index = 0;
+    for i = 1 , #listData , 1 do
+        local itemData = listData[i];
+        if   itemData.year ~= nil and itemData.month ~= nil then
+            local yearSelected = itemData.year;
+            local monthSelected = itemData.month;
+
+            local statusValidate = validateDateInsert(yearSelected , monthSelected);
+
+            ------*********
+            --if statusValidate == false then
+            --    index = i+2;
+            --    break;
+            --end
+            ------*********
+
+
+        end
+    end
+    return index;
+end
+
 
 
 
@@ -281,7 +307,6 @@ end
 
 function readylistTaminProduct(listProduct , year , month  )
     local listTaminProduct = selectData(year , month  );
-    teamyar.write_log(json.encode(listTaminProduct))
 
     if listProduct ~= nil then
         for i = 1 , #listProduct , 1 do
@@ -346,6 +371,38 @@ function readylistTaminProduct(listProduct , year , month  )
     return listProduct;
 end
 
+
+----------------------------------
+
+function getDateShamci()
+
+    local thisYear = time.get_year(time.current());
+    local thisMonth = time.get_month(time.current());
+    local thisDay = time.get_day(time.current())
+    local data ={
+        year = thisYear ,
+        month = thisMonth ,
+        day = thisDay ,
+    }
+    local timeShamsi = time.to_jalali(data);
+
+    return tonumber(timeShamsi.year) , tonumber(timeShamsi.month), tonumber(timeShamsi.day)
+end
+
+function validateDateInsert(yearSelected , monthSelected)
+    local status = false;
+    local year , month = getDateShamci();
+    yearSelected = tonumber(yearSelected)
+    monthSelected = tonumber(monthSelected)
+
+    if yearSelected > year or (yearSelected == year and monthSelected >= month) then
+        status = true;
+    end
+    return status;
+end
+
+
+
 ----------------------------------
 local params = teamyar.get_input();
 local method = params.method;
@@ -365,9 +422,14 @@ elseif method == "insert" then
     if params.__data__ ~= nil  then
         local jsonData = params.__data__;
         --local jsonData = json.decode(params.__data__);
-        executeData(jsonData);
-        response.msg = "عملیات با موفقیت انجام شد.";
-        response.status = true;
+        local index = executeData(jsonData);
+        if index == 0 then
+            response.msg = "عملیات با موفقیت انجام شد.";
+            response.status = true;
+        else
+            response.msg = " در ردیف " .. index .. " تاریخ انتخابی صحیح نمی باشد ";
+            response.status = false;
+        end
     end
     teamyar.write_result(json.encode(response))
 end

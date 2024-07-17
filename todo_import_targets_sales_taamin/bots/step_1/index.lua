@@ -126,7 +126,11 @@ function getProduct()
 
             product_id  = record[1],
             product_name = record[2],
-            full_code  = record[3],
+            active = record[3],
+            full_code  = record[4],
+            cardex = record[5],
+            res = record[6],
+            total = record[7],
             product_manufactured = _CONST_PRODUCT_MANUFACTORED._N,
             product_active = _CONST_PRODUCT_ACTIVE._NO
         })

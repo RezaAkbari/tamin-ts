@@ -82,16 +82,10 @@ function readyTemplateError(){
         type:'COL-1',
         class_name: ' mx-0 mt-2 px-4 pb-2' ,
         controls: [
-            "<p>خطایی رخ داده است، بطفا دوباره تلاش نمایید</p>",
+            "<p>خطایی رخ داده است، لطفا دوباره تلاش نمایید</p>",
         ]
     });
 }
-
-
-console.log(existError)
-console.log(templateDownload)
-console.log(templateUpload)
-console.log(templateError)
 
 $.Teamyar.layout({
     type:'COL-1',
@@ -105,14 +99,17 @@ $.Teamyar.layout({
 //---------------------------
 
 ty__main.downloadFileExcel = function (){
+    let dataRequest = {
+        year: getYearShamsi() ,
+        month: getMonthShamsi() ,
+        day: getDayShamsi()
+    };
+    dataRequest = addToDataRequest(dataRequest);
+
     $.Teamyar.ajax({
             options: {
                 url: getUrlRequestGet() ,
-                data: {
-                    year: getYearShamsi() ,
-                    month: getMonthShamsi() ,
-                    day: getDayShamsi()
-                } ,
+                data: dataRequest,
                 type: 'GET',
                 dataType:"json"
             },
@@ -168,7 +165,9 @@ ty__main.uploadFileExcel = function (){
                     dataJson.push(item);
                 }
             }
-            requestInsertData({__data__: dataJson , method: "insert"} , getUrlRequestInsert());
+            let dataRequest = {__data__: dataJson , method: "insert"};
+            dataRequest = addToDataRequest(dataRequest);
+            requestInsertData(dataRequest , getUrlRequestInsert());
         }
     });
 }
@@ -206,10 +205,10 @@ function requestInsertData(json , url ) {
 }
 
 function getElementTitlePopup(isError=false) {
-    let title = "موفق"
+    let title = "success"
     let classElement = "bg-success";
     if(isError){
-        title = "خطا"
+        title = "error"
         classElement = "bg-danger"
     }
     return '<span class="'+classElement+' rounded text-white mx-2 px-2">'
@@ -218,5 +217,16 @@ function getElementTitlePopup(isError=false) {
 }
 
 
+
+
+function addToDataRequest(dataRequest = {})
+{
+    if (typeof data != "undefined"){
+        Object.keys(data).forEach(function(key) {
+            dataRequest[key] = data[key];
+        });
+    }
+    return dataRequest;
+}
 
 

@@ -8,7 +8,7 @@ with data as (
                         productsInfo as (
                             with
                                 products as (
-                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID , FULL_CODE
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID , FULL_CODE , ACTIVE
                                     from wh_product as p
                                 ) ,
                                 product_attr as (
@@ -21,7 +21,7 @@ with data as (
                                     select id , DECIMAL_NUM
                                     from WH_STOCK_CAPACITY as wsp
                                 )
-                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE,
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE, p.ACTIVE,
                                    pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
                                    sc.DECIMAL_NUM
                             from products as p
@@ -69,9 +69,9 @@ with data as (
                                 )
                             select wspi.id as group_product_id , wspi.name as group_product_name , pgl.PRODUCT_ID
                             from pGroupLast as pgl
-                                     left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
+                             left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
                         )
-                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE,
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE, pi.ACTIVE ,
                                      pi.DECIMAL_NUM ,
                                      pg.group_product_id, pg.group_product_name
                     from productsInfo as pi
@@ -82,7 +82,7 @@ with data as (
                         productsInfo as (
                             with
                                 products as (
-                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID , FULL_CODE
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID , FULL_CODE , ACTIVE
                                     from wh_product as p
                                 ) ,
                                 product_attr as (
@@ -95,7 +95,7 @@ with data as (
                                     select id , DECIMAL_NUM
                                     from WH_STOCK_CAPACITY as wsp
                                 )
-                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE,
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE, p.ACTIVE ,
                                    pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
                                    sc.DECIMAL_NUM
                             from products as p
@@ -145,7 +145,7 @@ with data as (
                             from pGroupLast as pgl
                                      left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
                         )
-                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE,
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE, pi.ACTIVE ,
                                      pi.DECIMAL_NUM ,
                                      pg.group_product_id, pg.group_product_name
                     from productsInfo as pi
@@ -156,7 +156,7 @@ with data as (
                         productsInfo as (
                             with
                                 products as (
-                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE , ACTIVE
                                     from wh_product as p
                                 ) ,
                                 product_attr as (
@@ -169,7 +169,7 @@ with data as (
                                     select id , DECIMAL_NUM
                                     from WH_STOCK_CAPACITY as wsp
                                 )
-                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE ,
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.FULL_CODE , p.ACTIVE ,
                                    pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,
                                    sc.DECIMAL_NUM
                             from products as p
@@ -219,14 +219,14 @@ with data as (
                             from pGroupLast as pgl
                                      left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
                         )
-                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE ,
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE , pi.ACTIVE ,
                                      pi.DECIMAL_NUM ,
                                      pg.group_product_id, pg.group_product_name
                     from productsInfo as pi
                              join productGroup as pg on pi.product_id = pg.PRODUCT_ID
                 ),
                 group_motefareghe as (
-                    select wspi2.id as group_product_id, wspi2.name as group_product_name ,wp.id as product_id, wp.full_name as  product_full_Name ,FULL_CODE
+                    select wspi2.id as group_product_id, wspi2.name as group_product_name ,wp.id as product_id, wp.full_name as  product_full_Name ,FULL_CODE , ACTIVE
                     from WH_SETTING_PRODUCT_INFO as wspi
                              join wh_product as wp on wspi.PRODUCT_ID = wp.id
                              join WH_SETTING_PRODUCT_INFO as wspi2 on wspi.MODULE_PARENT_ID = wspi2.id
@@ -237,7 +237,7 @@ with data as (
                         productsInfo as (
                             with
                                 products as (
-                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE , ACTIVE
                                     from wh_product as p
                                 ) ,
                                 product_attr as (
@@ -250,7 +250,7 @@ with data as (
                                     select id , DECIMAL_NUM
                                     from WH_STOCK_CAPACITY as wsp
                                 )
-                            select p.product_id, p.product_name, p.product_full_Name, p.product_code ,
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.ACTIVE ,
                                    pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,p.FULL_CODE,
                                    sc.DECIMAL_NUM
                             from products as p
@@ -300,7 +300,7 @@ with data as (
                             from pGroupLast as pgl
                                      left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
                         )
-                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE,
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value , pi.FULL_CODE, pi.ACTIVE ,
                                      pi.DECIMAL_NUM ,
                                      pg.group_product_id, pg.group_product_name
                     from productsInfo as pi
@@ -311,7 +311,7 @@ with data as (
                         productsInfo as (
                             with
                                 products as (
-                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE
+                                    select p.id as product_id , p.NAME as product_name , p.full_name as product_full_Name , p.CODE as product_code , CAPACITY_ID ,FULL_CODE , ACTIVE
                                     from wh_product as p
                                 ) ,
                                 product_attr as (
@@ -324,7 +324,7 @@ with data as (
                                     select id , DECIMAL_NUM
                                     from WH_STOCK_CAPACITY as wsp
                                 )
-                            select p.product_id, p.product_name, p.product_full_Name, p.product_code ,
+                            select p.product_id, p.product_name, p.product_full_Name, p.product_code , p.ACTIVE ,
                                    pa.product_attr_name, product_attr_value, product_bar_code, product_attr_id ,p.FULL_CODE,
                                    sc.DECIMAL_NUM
                             from products as p
@@ -374,29 +374,94 @@ with data as (
                             from pGroupLast as pgl
                                      left join WH_SETTING_PRODUCT_INFO as wspi on pgl.parent = wspi.id
                         )
-                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value ,pi.FULL_CODE,
+                    select distinct  pi.product_id, pi.product_name, pi.product_full_Name, pi.product_code , pi.product_attr_value ,pi.FULL_CODE, pi.ACTIVE ,
                                      pi.DECIMAL_NUM ,
                                      pg.group_product_id, pg.group_product_name
                     from productsInfo as pi
                              join productGroup as pg on pi.product_id = pg.PRODUCT_ID
                 )
-            select distinct product_id, product_full_Name ,FULL_CODE from group_compiuter
+            select distinct product_id, product_full_Name , active ,FULL_CODE from group_compiuter
             union
-            select distinct product_id, product_full_Name ,FULL_CODE from group_mobili
+            select distinct product_id, product_full_Name , active  ,FULL_CODE from group_mobili
             union
-            select distinct product_id, product_full_Name ,FULL_CODE from group_soti
+            select distinct product_id, product_full_Name , active ,FULL_CODE from group_soti
             union
-            select distinct product_id, product_full_Name ,FULL_CODE from group_motefareghe
+            select distinct product_id, product_full_Name , active ,FULL_CODE from group_motefareghe
             union
-            select distinct product_id, product_full_Name ,FULL_CODE from group_sazmani
+            select distinct product_id, product_full_Name , ACTIVE ,FULL_CODE from group_sazmani
             union
-            select distinct product_id, product_full_Name ,FULL_CODE from group_gaming
-        )
-    select p.*  from products as p
+            select distinct product_id, product_full_Name , active ,FULL_CODE from group_gaming
+        ) ,
+         cardex as (
+             with
+                 org as (
+                     select id from org_info
+                     where id =2
+                 ),
+                 product as (
+                     select id , FULL_CODE , full_name , ORG_ID , CAPACITY_ID
+                     from wh_product
+                 ),
+                 capacity as (
+                     select id , DECIMAL_NUM
+                     from wh_stock_capacity
+                     where DELETED = 0
+                 ),
+                 stock as (
+                     select *
+                     from wh_stock as ws
+                     where ws.DELETED = 0
+                       and ws.id=4
+                 ) ,
+                 cardex as (
+                     with
+                         operation as (
+                             select id , org_id  from wh_operation
+                             where DELETED=0
+                               and DATE_OPERATION >= 133553664000000000
+                               and DATE_OPERATION <=133654340678250000+24*60*60*10000000
+                         ),
+                         operation_details as (
+                             select OPERATION_ID , QUANTITY , PRODUCT_ID , TYPE , STOCK_ID
+                             from wh_operation_details as wod
+                             where wod.DELETED = 0
+                               and wod.STATUS > 0
+                               and wod.IS_BACK=0
+                         )
+                     select distinct od.PRODUCT_ID  ,
+                                     sum( if(od.TYPE =1 , od.QUANTITY , od.QUANTITY*-1)) over (partition by od.PRODUCT_ID) as cardex
+                     from operation as o
+                              join org on o.ORG_ID = org.ID
+                              join operation_details as od on od.OPERATION_ID = o.id
+                              join stock as s on od.STOCK_ID = s.ID and o.org_id =s.ORG_ID
+                 ) ,
+                 reserve as (
+                     with
+                         reservations as (
+                             select *
+                             from wh_inventory_reservation
+                             where RESERVE_DATE >= 133553664000000000
+                               and RESERVE_DATE <=133654340678250000+24*60*60*10000000
+                         )
+                     select distinct r.PRODUCT_ID  ,
+                                     sum(   (COALESCE(r.Quantity,0)/POWER(10,COALESCE(c.DECIMAL_NUM,0))) ) over (partition by r.PRODUCT_ID) as res
+                     from reservations as r
+                              join org as o on r.ORG_ID = o.ID
+                              join stock as s on r.STOCK_ID = s.ID and r.org_id =o.id
+                              join product as p on p.id = r.PRODUCT_ID and p.ORG_ID = o.id
+                              left join  capacity as c on c.ID = p.CAPACITY_ID
+                 )
+             select c.PRODUCT_ID , c.cardex , r.res ,
+                    ( COALESCE(c.cardex,0)  - COALESCE(r.res,0) ) as total
+             from cardex as c
+             left join reserve as r on r.PRODUCT_ID = c.PRODUCT_ID
+         )
+
+    select p.*  , c.cardex , c.res , c.total
+    from products as p
+    join cardex as c on p.product_id = c.PRODUCT_ID
 
 )
 select * from data
-
-
 
 

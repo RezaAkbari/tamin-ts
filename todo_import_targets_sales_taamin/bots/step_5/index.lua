@@ -17,7 +17,7 @@ local _CONST_PRODUCT_ACTIVE = {
 
 ----------------
 local all = false;
-local accessGroupId =12648;
+local accessGroupId =-1;
 ----------------
 
 local _tableName = "supply_unit_product_result_target_accepts";
@@ -85,7 +85,6 @@ function getTargetId(product_id , year , month  )
             product_id , year , month
         }
     }
-    teamyar.write_log(json.encode(param));
     db.use_db("0000000_bot")
     local result = {}
     db.query(param)
@@ -151,6 +150,7 @@ function getProductGroupSelected()
 
     local query = teamyar.get_attachment("query_products_in_group_selected.txt");
     local status = false;
+
     if all== true then
         local ids = {};
         for i = 1 , #groupData, 1 do
@@ -159,6 +159,7 @@ function getProductGroupSelected()
                 table.insert(ids , itemGroup.id);
             end
         end
+        teamyar.write_log(json.encode(ids));
         query , status = getQuerySelectGroup(query  , ids , "")
     else
         for i = 1 , #groupData, 1 do
@@ -239,6 +240,7 @@ function getQuerySelectGroup(query , id , name)
     end
     query = string.gsub(query , "{{selectGroupIds}}" , str);
 
+    teamyar.write_log(json.encode(query));
 
     return query , status;
 end
@@ -642,14 +644,35 @@ local method = params.method;
 
 
 if params.groupId ~= nil then
-    accessGroupId = params.groupId;
+    accessGroupId = tonumber(params.groupId);
 end
+if params.allGroups ~= nil then
+    if type(params.allGroups) == "boolean" then
+        all = params.allGroups;
+    elseif type(params.allGroups) == "number" or type(params.allGroups) == "string" then
+        local allNum = tonumber(params.allGroups)
+        all = false;
+        if allNum == 1 then
+            all = true
+        end
+    end
+end
+
 local accessFull , accessDownload = checkAccessClient();
 
 if method == "" or method == nil then
     local template = teamyar.get_attachment("template.html")
     template = string.gsub(template , "{{accessFull}}" , tostring(accessFull));
     template = string.gsub(template , "{{accessDownload}}" , tostring(accessDownload));
+
+    template = string.gsub(template , "{{accessGroupId}}" , tostring(accessGroupId));
+
+    local allNum = 0
+    if all == true then
+        allNum = 1
+    end
+    template = string.gsub(template , "{{allGroups}}" , tostring(allNum));
+
     teamyar.write_result(template)
 elseif method == "get" and params.year~=nil and params.month~=nil and ( (accessFull or accessDownload)) then
     local listProduct = readyListProduct(params.year , params.month);
@@ -665,7 +688,6 @@ elseif method == "insert" then
 
         if jsonData ~= nil and status == true  then
             jsonData = readyListAgents(jsonData);
-            teamyar.write_log(json.encode(jsonData))
             executeData(jsonData);
             response.msg = "عملیات با موفقیت انجام شد.";
             response.status = true;
