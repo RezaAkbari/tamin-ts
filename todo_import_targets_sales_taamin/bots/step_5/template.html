@@ -1,14 +1,9 @@
-<div id="test_controller"></div>
-
-<script>
-    accessFull = {{accessFull}};
-    accessDownload = {{accessDownload}};
-
-    data = {
-        groupId : {{accessGroupId}} ,
-         allGroups : {{allGroups}}
-    }
-</script>
+<div class="test_controller"
+     data-changed="0"
+     data-access-full = '{{accessFull}}'
+     data-access-download = '{{accessDownload}}'
+     data-request='function() { return  { "groupId": {{accessGroupId}} ,"allGroups": {{allGroups}} ,  "task_id" : {{task_id}} ,"task_step_id" : {{task_step_id}} }  }'>
+</div>
 
 <script src="/bot/run/332/sales_accept_final_target_status/fetch.js"></script>
 <script src="/bot/run/332/sales_accept_final_target_status/DateTools.js"></script>

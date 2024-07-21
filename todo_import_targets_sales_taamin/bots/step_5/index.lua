@@ -643,6 +643,47 @@ local params = teamyar.get_input();
 local method = params.method;
 
 
+function getTaskData()
+    local task_id = 0;
+    local task_step_id = 0;
+    ---
+    if params.task_id ~= nil then
+        task_id = params.task_id;
+    end
+    if params.task_step_id ~= nil then
+        task_step_id = params.task_step_id;
+    end
+
+    return task_id , task_step_id;
+end
+
+function checkStatusUploadExcel()
+    local task_id , task_step_id = getTaskData();
+
+    ---
+    local response = teamyar.run_command("332/status_todo_step_boty", {
+        task_id = task_id ,
+        task_step_id = task_step_id
+    });
+    response = json.decode(response);
+    ---
+    local status = false;
+    local msg = "";
+    if response.status ~= nil then
+        status = response.status;
+    end
+    if response.msg ~= nil then
+        msg = response.msg;
+    end
+    teamyar.write_log(json.encode(response))
+    return status , msg;
+end
+
+
+
+
+----------------------------------
+
 if params.groupId ~= nil then
     accessGroupId = tonumber(params.groupId);
 end
@@ -673,6 +714,10 @@ if method == "" or method == nil then
     end
     template = string.gsub(template , "{{allGroups}}" , tostring(allNum));
 
+    local task_id , task_step_id = getTaskData();
+    template = string.gsub(template , "{{task_id}}" , tostring(task_id));
+    template = string.gsub(template , "{{task_step_id}}" , tostring(task_step_id));
+
     teamyar.write_result(template)
 elseif method == "get" and params.year~=nil and params.month~=nil and ( (accessFull or accessDownload)) then
     local listProduct = readyListProduct(params.year , params.month);
@@ -686,16 +731,21 @@ elseif method == "insert" then
         local jsonData = params.__data__;
         jsonData , status , msg = readyStepOneListAgents(jsonData);
 
-        if jsonData ~= nil and status == true  then
-            jsonData = readyListAgents(jsonData);
-            executeData(jsonData);
-            response.msg = "عملیات با موفقیت انجام شد.";
-            response.status = true;
-        else
-            response.msg = msg;
-            response.status = false;
-        end
 
+        local status , msg = checkStatusUploadExcel();
+        if status == true then
+            if jsonData ~= nil and status == true  then
+                jsonData = readyListAgents(jsonData);
+                executeData(jsonData);
+                response.msg = "عملیات با موفقیت انجام شد.";
+                response.status = true;
+            else
+                response.msg = msg;
+                response.status = false;
+            end
+        else
+            response.msg = "مجاز به آپلود فایل نمی باشد";
+        end
     end
     teamyar.write_result(json.encode(response))
 end

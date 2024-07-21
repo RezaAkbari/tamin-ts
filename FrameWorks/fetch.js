@@ -28,3 +28,7 @@ async function fetchData(url, data={} , method= "post" , contentType = "applicat
         return {data: null , error:  true};
     }
 }
+
+
+
+

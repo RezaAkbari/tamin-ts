@@ -177,9 +177,51 @@ end
 local params = teamyar.get_input();
 local method = params.method;
 
+function getTaskData()
+    local task_id = 0;
+    local task_step_id = 0;
+    ---
+    if params.task_id ~= nil then
+        task_id = params.task_id;
+    end
+    if params.task_step_id ~= nil then
+        task_step_id = params.task_step_id;
+    end
+
+    return task_id , task_step_id;
+end
+
+function checkStatusUploadExcel()
+    local task_id , task_step_id = getTaskData();
+
+    ---
+   local response = teamyar.run_command("332/status_todo_step_boty", {
+        task_id = task_id ,
+        task_step_id = task_step_id
+    });
+    response = json.decode(response);
+    ---
+    local status = false;
+    local msg = "";
+    if response.status ~= nil then
+        status = response.status;
+    end
+    if response.msg ~= nil then
+        msg = response.msg;
+    end
+    teamyar.write_log(json.encode(response))
+    return status , msg;
+end
+
+----------------------------------
 
 if method == "" or method == nil then
     local template = teamyar.get_attachment("template.html")
+
+    local task_id , task_step_id = getTaskData();
+    template = string.gsub(template , "{{task_id}}" , tostring(task_id));
+    template = string.gsub(template , "{{task_step_id}}" , tostring(task_step_id));
+
     teamyar.write_result(template)
 elseif method == "get" then
     local listProduct = readyListProduct();
@@ -191,10 +233,16 @@ elseif method == "insert" then
     }
     if params.__data__ ~= nil  then
         local jsonData = params.__data__;
-        --local jsonData = json.decode(params.__data__);
-        executeData(jsonData);
-        response.msg = "عملیات با موفقیت انجام شد.";
-        response.status = true;
+
+        local status , msg = checkStatusUploadExcel();
+        if status == true then
+            executeData(jsonData);
+            response.msg = "عملیات با موفقیت انجام شد.";
+            response.status = true;
+        else
+            response.msg = "مجاز به آپلود فایل نمی باشد";
+        end
+
     end
     teamyar.write_result(json.encode(response))
 end

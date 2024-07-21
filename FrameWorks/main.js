@@ -1,25 +1,31 @@
+const idMain = Math.round(Math.random()*1000000)
+
+const idSelector = "test_controller_" +  idMain;
+
+$(".test_controller[data-changed=0]").attr("id" , idSelector).attr("data-change" , 1)
+
+let accessFull =  $("#"+idSelector).attr("data-access-full");
+accessFull = accessFull === "false" ? false : Boolean(accessFull);
+
+let accessDownload =  $("#"+idSelector).attr("data-access-download");
+accessDownload = accessDownload === "false" ? false : Boolean(accessDownload);
+
+///----------------------
 let existError = false;
 let templateDownload = "";
 let templateUpload = "";
 let templateError = "";
-if (typeof accessDownload !== 'undefined' && typeof accessFull !== 'undefined' ){
-    if (accessFull ){
-        readyTemplateDownload();
-        readyTemplateUpload();
-    }
-    else if (accessDownload){
-        readyTemplateDownload();
-    }
-    else {
-        existError = true;
-        readyTemplateError();
-    }
-}
-else{
+if (accessFull ){
     readyTemplateDownload();
     readyTemplateUpload();
 }
-
+else if (accessDownload){
+    readyTemplateDownload();
+}
+else {
+    existError = true;
+    readyTemplateError();
+}
 
 function readyTemplateDownload(){
     templateDownload = $.Teamyar.layout({
@@ -91,7 +97,7 @@ $.Teamyar.layout({
     type:'COL-1',
     class_name: 'w-75 mx-auto px-0 pb-2 rounded  bg-white' ,
     id: "tester",
-    selector: "#test_controller",
+    selector: "#"+idSelector,
     controls: !existError ? [templateDownload , templateUpload] : [templateError]
 });
 
@@ -221,11 +227,15 @@ function getElementTitlePopup(isError=false) {
 
 function addToDataRequest(dataRequest = {})
 {
-    if (typeof data != "undefined"){
-        Object.keys(data).forEach(function(key) {
-            dataRequest[key] = data[key];
-        });
-    }
+   const element =  $("#"+idSelector);
+   const dataRequestFn = element.attr("data-request");
+   const methodString = new Function('return ' + dataRequestFn)();
+   const data = methodString();
+
+    Object.keys(data).forEach(function(key) {
+        dataRequest[key] = data[key];
+    });
+
     return dataRequest;
 }
 
