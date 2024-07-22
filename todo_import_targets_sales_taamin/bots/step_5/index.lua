@@ -159,7 +159,6 @@ function getProductGroupSelected()
                 table.insert(ids , itemGroup.id);
             end
         end
-        teamyar.write_log(json.encode(ids));
         query , status = getQuerySelectGroup(query  , ids , "")
     else
         for i = 1 , #groupData, 1 do
@@ -239,8 +238,6 @@ function getQuerySelectGroup(query , id , name)
         status = true;
     end
     query = string.gsub(query , "{{selectGroupIds}}" , str);
-
-    teamyar.write_log(json.encode(query));
 
     return query , status;
 end
@@ -654,6 +651,7 @@ function getTaskData()
         task_step_id = params.task_step_id;
     end
 
+
     return task_id , task_step_id;
 end
 
@@ -661,7 +659,7 @@ function checkStatusUploadExcel()
     local task_id , task_step_id = getTaskData();
 
     ---
-    local response = teamyar.run_command("332/status_todo_step_boty", {
+    local response = teamyar.run_command("258/status_todo_step_boty", {
         task_id = task_id ,
         task_step_id = task_step_id
     });
@@ -675,7 +673,6 @@ function checkStatusUploadExcel()
     if response.msg ~= nil then
         msg = response.msg;
     end
-    teamyar.write_log(json.encode(response))
     return status , msg;
 end
 
@@ -727,13 +724,15 @@ elseif method == "insert" then
         msg = "مشکلی در انجام عملیات رخ داده است." ,
         status = false
     }
-    if params.__data__ ~= nil and accessFull  then
-        local jsonData = params.__data__;
-        jsonData , status , msg = readyStepOneListAgents(jsonData);
 
+    if params.__data__ ~= nil and accessFull == true  then
+        local jsonData = params.__data__;
 
         local status , msg = checkStatusUploadExcel();
+
         if status == true then
+            jsonData , status , msg = readyStepOneListAgents(jsonData);
+
             if jsonData ~= nil and status == true  then
                 jsonData = readyListAgents(jsonData);
                 executeData(jsonData);
@@ -749,11 +748,3 @@ elseif method == "insert" then
     end
     teamyar.write_result(json.encode(response))
 end
-
-
-
-
-
-
-
-

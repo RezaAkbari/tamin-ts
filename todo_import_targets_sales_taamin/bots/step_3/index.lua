@@ -108,10 +108,10 @@ function checkStatusValidateDate(listData)
             local statusValidate = validateDateInsert(yearSelected , monthSelected);
 
             ------*********
-            --if statusValidate == false then
-            --    index = i+2;
-            --    break;
-            --end
+            if statusValidate == false then
+                index = i+2;
+                break;
+            end
             ------*********
 
 
@@ -170,18 +170,7 @@ function updateData( product_id , product_manufactured , product_active , descri
     db.use_db("0000000");
 end
 
---function deleteData(id , product_id)
---    createTable();
---    db.start();
---    db.use_db("0000000_bot")
---    local params = {
---        query = "delete from " .. _tableName .. " where id=? and product_id=?",
---        params = {id , product_id }
---    };
---    db.query_immediate(params)
---    db.commit();
---    db.use_db("0000000");
---end
+
 ----------------------------------
 function readyListProduct(year , month  )
     createTable();
